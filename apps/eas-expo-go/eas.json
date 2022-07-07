@@ -18,17 +18,14 @@
         }
       }
     },
-    "versioned-client-base": {
+    "versioned-client": {
       "extends": "base",
       "env": {
-        "EXPO_GO_BUILD_TYPE": "versioned-client"
+        "EAS_BUILD_PROFILE": "versioned-client"
       },
       "android": {
         "gradleCommand": ":app:assembleVersionedDebug",
-        "withoutCredentials": true,
-        "env": {
-          "ANDROID_SDK_ROOT": "/home/expo/Android/Sdk"
-        }
+        "withoutCredentials": true
       },
       "ios": {
         "scheme": "Expo Go \\(versioned\\)",
@@ -37,21 +34,36 @@
       }
     },
     "versioned-client-signed": {
-      "extends": "versioned-client-base",
+      "extends": "versioned-client",
+      "env": {
+        "EAS_BUILD_PROFILE": "versioned-client-signed"
+      },
       "android": {
-        "gradleCommand": ":app:assembleVersionedRelease",
-        "env": {
-          "ANDROID_SDK_ROOT": "/home/expo/Android/Sdk"
-        }
+        "gradleCommand": ":app:bundleVersionedRelease"
       },
       "ios": {
         "simulator": false
       }
     },
     "versioned-client-add-sdk": {
-      "extends": "versioned-client-base",
+      "extends": "versioned-client",
       "env": {
-        "EXPO_GO_BUILD_TYPE": "versioned-client-add-sdk"
+        "EAS_BUILD_PROFILE": "versioned-client-add-sdk"
+      }
+    },
+    "unversioned-client": {
+      "extends": "base",
+      "env": {
+        "EAS_BUILD_PROFILE": "unversioned-client"
+      },
+      "android": {
+        "gradleCommand": ":app:assembleUnversionedDebug",
+        "withoutCredentials": true
+      },
+      "ios": {
+        "scheme": "Expo Go \\(unversioned\\)",
+        "simulator": true,
+        "buildConfiguration": "Release"
       }
     }
   }
