@@ -6,7 +6,6 @@ import * as React from 'react';
 import { TouchableOpacity } from 'react-native-gesture-handler';
 import url from 'url';
 
-import Analytics from '../../api/Analytics';
 import ApolloClient from '../../api/ApolloClient';
 import Config from '../../api/Config';
 import { useDispatch, useSelector } from '../../redux/Hooks';
@@ -66,14 +65,14 @@ export function LoggedOutAccountView({ refetch }: Props) {
   }, []);
 
   const _handleSignInPress = async () => {
-    await _handleAuthentication('login', Analytics.events.USER_LOGGED_IN);
+    await _handleAuthentication('login');
   };
 
   const _handleSignUpPress = async () => {
-    await _handleAuthentication('signup', Analytics.events.USER_CREATED_ACCOUNT);
+    await _handleAuthentication('signup');
   };
 
-  const _handleAuthentication = async (urlPath: string, analyticsEvent: string) => {
+  const _handleAuthentication = async (urlPath: string) => {
     if (isAuthenticating) {
       return;
     }
@@ -108,12 +107,6 @@ export function LoggedOutAccountView({ refetch }: Props) {
         if (!sessionSecret) {
           throw new Error('session_secret is missing in auth redirect query');
         }
-
-        const trackingOpts = {
-          usernameOrEmail,
-        };
-        Analytics.identify(null, trackingOpts);
-        Analytics.track(analyticsEvent, trackingOpts);
 
         dispatch(
           SessionActions.setSession({
