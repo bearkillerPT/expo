@@ -1,7 +1,7 @@
 import { toByteArray } from 'base64-js';
 import { UnavailabilityError, UintBasedTypedArray, IntBasedTypedArray } from 'expo-modules-core';
 
-import { CryptoDigestAlgorithm, CryptoEncoding, CryptoDigestOptions, Digest } from './Crypto.types';
+import { CryptoDigestAlgorithm, CryptoEncoding, CryptoDigestOptions, Digest, CryptoHmacAlgorithm, CryptoHmacOptions } from './Crypto.types';
 import ExpoCrypto from './ExpoCrypto';
 
 declare const global: any;
@@ -216,6 +216,58 @@ export function digest(algorithm: CryptoDigestAlgorithm, data: BufferSource): Pr
       } else {
         const output = new Uint8Array(digestLengths[algorithm]);
         ExpoCrypto.digest(algorithm, output, data);
+        resolve(output.buffer);
+      }
+    } catch (error) {
+      reject(error);
+    }
+  });
+}
+
+// @needsAudit
+/**
+ * Generates an HMAC of the supplied `data` string using the provided `key` and HMAC `algorithm`.
+ * You can specify the returned string format as one of `CryptoEncoding`. By default, the resolved value will be formatted as a `HEX` string.
+ */
+export async function hmacStringAsync(
+  algorithm: CryptoHmacAlgorithm,
+  key: string,
+  data: string,
+  options: CryptoHmacOptions = { encoding: CryptoEncoding.HEX }
+): Promise<string> {
+  if (!ExpoCrypto.hmacStringAsync) {
+    throw new UnavailabilityError('expo-crypto', 'hmacStringAsync');
+  }
+  assertData(key);
+  assertData(data);
+  assertEncoding(options.encoding);
+  return await ExpoCrypto.hmacStringAsync(algorithm, key, data, options);
+}
+
+/**
+ * Generates an HMAC of the supplied bytes `data` using the provided key bytes and HMAC `algorithm`.
+ * Returns an ArrayBuffer.
+ */
+export function hmac(
+  algorithm: CryptoHmacAlgorithm,
+  key: BufferSource,
+  data: BufferSource
+): Promise<ArrayBuffer> {
+  return new Promise((resolve, reject) => {
+    try {
+      if (typeof ExpoCrypto.hmacAsync === 'function') {
+        resolve(ExpoCrypto.hmacAsync(algorithm, key, data));
+      } else {
+        const output = new Uint8Array(
+          algorithm === CryptoHmacAlgorithm.SHA1
+            ? 20
+            : algorithm === CryptoHmacAlgorithm.SHA256
+            ? 32
+            : algorithm === CryptoHmacAlgorithm.SHA384
+            ? 48
+            : 64
+        );
+        ExpoCrypto.hmac(algorithm, output, key, data);
         resolve(output.buffer);
       }
     } catch (error) {

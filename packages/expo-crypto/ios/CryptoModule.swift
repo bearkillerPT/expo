@@ -18,6 +18,8 @@ public class CryptoModule: Module {
     Function("getRandomValues", getRandomValues)
 
     Function("digest", digest)
+    Function("hmac", hmac)
+    AsyncFunction("hmacStringAsync", hmacString)
 
     Function("randomUUID") {
       UUID().uuidString.lowercased()
@@ -71,6 +73,29 @@ private func getRandomValues(array: TypedArray) throws -> TypedArray {
 private func digest(algorithm: DigestAlgorithm, output: TypedArray, data: TypedArray) {
   let outputPtr = output.rawPointer.assumingMemoryBound(to: UInt8.self)
   _ = algorithm.digest(data.rawPointer, UInt32(data.byteLength), outputPtr)
+}
+
+private func hmac(algorithm: HmacAlgorithm, output: TypedArray, key: TypedArray, data: TypedArray) {
+  let outPtr = output.rawPointer.assumingMemoryBound(to: UInt8.self)
+  CCHmac(algorithm.ccAlgorithm, key.rawPointer, key.byteLength, data.rawPointer, data.byteLength, outPtr)
+}
+
+private func hmacString(algorithm: HmacAlgorithm, key: String, data: String, options: DigestOptions) throws -> String {
+  guard let keyData = key.data(using: .utf8), let messageData = data.data(using: .utf8) else {
+    throw LossyConversionException()
+  }
+  var mac = [UInt8](repeating: 0, count: algorithm.digestLength)
+  keyData.withUnsafeBytes { keyBytes in
+    messageData.withUnsafeBytes { msgBytes in
+      CCHmac(algorithm.ccAlgorithm, keyBytes.baseAddress, keyData.count, msgBytes.baseAddress, messageData.count, &mac)
+    }
+  }
+  switch options.encoding {
+  case .hex:
+    return mac.reduce("") { $0 + String(format: "%02x", $1) }
+  case .base64:
+    return Data(mac).base64EncodedString()
+  }
 }
 
 private final class LossyConversionException: Exception {

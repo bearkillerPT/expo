@@ -56,3 +56,22 @@ export type CryptoDigestOptions = {
 
 // @docsMissing
 export type Digest = string;
+
+// @needsAudit
+/**
+ * HMAC algorithms using the corresponding hash function.
+ */
+export enum CryptoHmacAlgorithm {
+  SHA1 = 'HMAC-SHA-1',
+  SHA256 = 'HMAC-SHA-256',
+  SHA384 = 'HMAC-SHA-384',
+  SHA512 = 'HMAC-SHA-512',
+}
+
+// @needsAudit
+export type CryptoHmacOptions = {
+  /**
+   * Format the HMAC is returned in.
+   */
+  encoding: CryptoEncoding;
+};

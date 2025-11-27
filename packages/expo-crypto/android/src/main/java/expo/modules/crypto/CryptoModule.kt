@@ -20,6 +20,8 @@ class CryptoModule : Module() {
     AsyncFunction("getRandomBase64StringAsync", this@CryptoModule::getRandomBase64String)
     Function("getRandomValues", this@CryptoModule::getRandomValues)
     Function("digest", this@CryptoModule::digest)
+    Function("hmac", this@CryptoModule::hmac)
+    AsyncFunction("hmacStringAsync", this@CryptoModule::hmacString)
     Function("randomUUID") {
       UUID.randomUUID().toString()
     }
@@ -54,6 +56,28 @@ class CryptoModule : Module() {
 
     val digest: ByteArray = messageDigest.digest()
     output.write(digest, output.byteOffset, output.byteLength)
+  }
+
+  private fun hmac(algorithm: HmacAlgorithm, output: TypedArray, key: TypedArray, data: TypedArray) {
+    val mac = javax.crypto.Mac.getInstance(algorithm.value)
+    val secret = javax.crypto.spec.SecretKeySpec(key.toDirectBuffer().array(), algorithm.value)
+    mac.init(secret)
+    mac.update(data.toDirectBuffer())
+    val result = mac.doFinal()
+    output.write(result, output.byteOffset, output.byteLength)
+  }
+
+  private fun hmacString(algorithm: HmacAlgorithm, key: String, data: String, options: DigestOptions): String {
+    val mac = javax.crypto.Mac.getInstance(algorithm.value)
+    val secret = javax.crypto.spec.SecretKeySpec(key.toByteArray(), algorithm.value)
+    mac.init(secret)
+    val result = mac.doFinal(data.toByteArray())
+    return when (options.encoding) {
+      DigestOptions.Encoding.BASE64 -> Base64.encodeToString(result, Base64.NO_WRAP)
+      DigestOptions.Encoding.HEX -> result.joinToString(separator = "") { byte ->
+        ((byte.toInt() and 0xff) + 0x100).toString(radix = 16).substring(startIndex = 1)
+      }
+    }
   }
 
   private fun getRandomValues(typedArray: TypedArray) {
