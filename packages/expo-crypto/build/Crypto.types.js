@@ -46,4 +46,15 @@ export var CryptoEncoding;
      */
     CryptoEncoding["BASE64"] = "base64";
 })(CryptoEncoding || (CryptoEncoding = {}));
+// @needsAudit
+/**
+ * HMAC algorithms using the corresponding hash function.
+ */
+export var CryptoHmacAlgorithm;
+(function (CryptoHmacAlgorithm) {
+    CryptoHmacAlgorithm["SHA1"] = "HMAC-SHA-1";
+    CryptoHmacAlgorithm["SHA256"] = "HMAC-SHA-256";
+    CryptoHmacAlgorithm["SHA384"] = "HMAC-SHA-384";
+    CryptoHmacAlgorithm["SHA512"] = "HMAC-SHA-512";
+})(CryptoHmacAlgorithm || (CryptoHmacAlgorithm = {}));
 //# sourceMappingURL=Crypto.types.js.map

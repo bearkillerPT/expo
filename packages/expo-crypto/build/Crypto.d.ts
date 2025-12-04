@@ -1,5 +1,5 @@
 import { UintBasedTypedArray, IntBasedTypedArray } from 'expo-modules-core';
-import { CryptoDigestAlgorithm, CryptoDigestOptions, Digest } from './Crypto.types';
+import { CryptoDigestAlgorithm, CryptoDigestOptions, Digest, CryptoHmacAlgorithm, CryptoHmacOptions } from './Crypto.types';
 export * from './Crypto.types';
 /**
  * Generates completely random bytes using native implementations. The `byteCount` property
@@ -80,4 +80,22 @@ export declare function randomUUID(): string;
  * ```
  */
 export declare function digest(algorithm: CryptoDigestAlgorithm, data: BufferSource): Promise<ArrayBuffer>;
+/**
+ * Generates an HMAC of the supplied `data` string using the provided `key` and HMAC `algorithm`.
+ * You can specify the returned string format as one of `CryptoEncoding`. By default, the resolved value will be formatted as a `HEX` string.
+ * @param algorithm The HMAC algorithm (e.g. `CryptoHmacAlgorithm.SHA256`).
+ * @param key Secret key as a UTF-8 string.
+ * @param data Message to authenticate as a UTF-8 string.
+ * @param options Output encoding (hex or base64). Defaults to hex.
+ */
+export declare function hmacStringAsync(algorithm: CryptoHmacAlgorithm, key: string, data: string, options?: CryptoHmacOptions): Promise<string>;
+/**
+ * Generates an HMAC of the supplied bytes `data` using the provided key bytes and HMAC `algorithm`.
+ * Returns an ArrayBuffer.
+ * @param algorithm The HMAC algorithm (e.g. `CryptoHmacAlgorithm.SHA256`).
+ * @param key Secret key bytes.
+ * @param data Message bytes.
+ * @return Promise resolving with an ArrayBuffer of the HMAC.
+ */
+export declare function hmac(algorithm: CryptoHmacAlgorithm, key: BufferSource, data: BufferSource): Promise<ArrayBuffer>;
 //# sourceMappingURL=Crypto.d.ts.map

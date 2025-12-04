@@ -6,9 +6,7 @@
  *  */
 
 export type DigestAlgorithm = any;
-
 export type DigestOptions = any;
-
 export type TypedArray = any;
 
 export function digestString(
@@ -42,3 +40,64 @@ export async function digestStringAsync(
 export async function getRandomBase64StringAsync(length: number): Promise<string> {
   return '';
 }
+
+export function hmac(algorithm: any, output: TypedArray, key: TypedArray, data: TypedArray): void {
+  const nodeCrypto = require('crypto');
+  const hashName = String(algorithm).includes('SHA-1')
+    ? 'sha1'
+    : String(algorithm).includes('SHA-256')
+      ? 'sha256'
+      : String(algorithm).includes('SHA-384')
+        ? 'sha384'
+        : 'sha512';
+  const keyView = (key?.buffer ? new Uint8Array(key.buffer) : new Uint8Array(key)) as Uint8Array;
+  const dataView = (
+    data?.buffer ? new Uint8Array(data.buffer) : new Uint8Array(data)
+  ) as Uint8Array;
+  const mac = nodeCrypto.createHmac(hashName, keyView).update(dataView).digest();
+  const outArray = new Uint8Array(output.buffer ?? output);
+  const outOffset = (output.byteOffset ?? 0) as number;
+  const outLen = (output.byteLength ?? mac.length) as number;
+  outArray.set(mac.subarray(0, outLen), outOffset);
+}
+
+export function hmacString(
+  algorithm: any,
+  key: string,
+  data: string,
+  options: DigestOptions
+): string {
+  return '';
+}
+
+export async function hmacStringAsync(
+  algorithm: any,
+  key: string,
+  data: string,
+  options: DigestOptions
+): Promise<string> {
+  const nodeCrypto = require('crypto');
+  const enc = options?.encoding === 'base64' ? 'base64' : 'hex';
+  const hashName = String(algorithm).includes('SHA-1')
+    ? 'sha1'
+    : String(algorithm).includes('SHA-256')
+      ? 'sha256'
+      : String(algorithm).includes('SHA-384')
+        ? 'sha384'
+        : 'sha512';
+  return nodeCrypto.createHmac(hashName, key).update(data, 'utf8').digest(enc);
+}
+
+// Default export object to satisfy requireNativeModule('ExpoCrypto') in tests
+export default {
+  digestString,
+  digestStringAsync,
+  getRandomBase64String,
+  getRandomBase64StringAsync,
+  getRandomValues,
+  digest,
+  randomUUID,
+  hmac,
+  hmacString,
+  hmacStringAsync,
+};

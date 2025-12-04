@@ -19,6 +19,7 @@ public class CryptoModule: Module {
 
     Function("digest", digest)
     Function("hmac", hmac)
+    Function("hmacString", hmacString)
     AsyncFunction("hmacStringAsync", hmacString)
 
     Function("randomUUID") {

@@ -49,4 +49,19 @@ export type CryptoDigestOptions = {
     encoding: CryptoEncoding;
 };
 export type Digest = string;
+/**
+ * HMAC algorithms using the corresponding hash function.
+ */
+export declare enum CryptoHmacAlgorithm {
+    SHA1 = "HMAC-SHA-1",
+    SHA256 = "HMAC-SHA-256",
+    SHA384 = "HMAC-SHA-384",
+    SHA512 = "HMAC-SHA-512"
+}
+export type CryptoHmacOptions = {
+    /**
+     * Format the HMAC is returned in.
+     */
+    encoding: CryptoEncoding;
+};
 //# sourceMappingURL=Crypto.types.d.ts.map

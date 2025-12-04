@@ -5,6 +5,7 @@
 ### 🛠 Breaking changes
 
 ### 🎉 New features
+- Added HMAC APIs: `hmacStringAsync`, `hmac`, and new enum `CryptoHmacAlgorithm` with SHA-1/256/384/512 support. (Unpublished)
 
 ### 🐛 Bug fixes
 

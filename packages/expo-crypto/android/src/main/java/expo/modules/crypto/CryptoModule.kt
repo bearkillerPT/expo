@@ -21,6 +21,7 @@ class CryptoModule : Module() {
     Function("getRandomValues", this@CryptoModule::getRandomValues)
     Function("digest", this@CryptoModule::digest)
     Function("hmac", this@CryptoModule::hmac)
+    Function("hmacString", this@CryptoModule::hmacString)
     AsyncFunction("hmacStringAsync", this@CryptoModule::hmacString)
     Function("randomUUID") {
       UUID.randomUUID().toString()
@@ -60,10 +61,14 @@ class CryptoModule : Module() {
 
   private fun hmac(algorithm: HmacAlgorithm, output: TypedArray, key: TypedArray, data: TypedArray) {
     val mac = javax.crypto.Mac.getInstance(algorithm.value)
-    val secret = javax.crypto.spec.SecretKeySpec(key.toDirectBuffer().array(), algorithm.value)
+    val keyBuffer = key.toDirectBuffer()
+    val keyBytes = ByteArray(keyBuffer.remaining())
+    keyBuffer.get(keyBytes)
+    val secret = javax.crypto.spec.SecretKeySpec(keyBytes, algorithm.value)
     mac.init(secret)
     mac.update(data.toDirectBuffer())
     val result = mac.doFinal()
+    require(result.size == output.byteLength) { "Output TypedArray length ${output.byteLength} does not match HMAC length ${result.size}" }
     output.write(result, output.byteOffset, output.byteLength)
   }
 

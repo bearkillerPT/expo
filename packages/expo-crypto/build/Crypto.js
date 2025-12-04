@@ -1,6 +1,6 @@
 import { toByteArray } from 'base64-js';
 import { UnavailabilityError } from 'expo-modules-core';
-import { CryptoDigestAlgorithm, CryptoEncoding } from './Crypto.types';
+import { CryptoDigestAlgorithm, CryptoEncoding, CryptoHmacAlgorithm, } from './Crypto.types';
 import ExpoCrypto from './ExpoCrypto';
 export * from './Crypto.types';
 class CryptoError extends TypeError {
@@ -87,6 +87,11 @@ function assertData(data) {
 function assertEncoding(encoding) {
     if (!Object.values(CryptoEncoding).includes(encoding)) {
         throw new CryptoError(`Invalid encoding provided. Expected one of: CryptoEncoding.${Object.keys(CryptoEncoding).join(', CryptoEncoding.')}`);
+    }
+}
+function assertHmacAlgorithm(algorithm) {
+    if (!Object.values(CryptoHmacAlgorithm).includes(algorithm)) {
+        throw new CryptoError(`Invalid HMAC algorithm provided. Expected one of: CryptoHmacAlgorithm.${Object.keys(CryptoHmacAlgorithm).join(', CryptoHmacAlgorithm.')}`);
     }
 }
 // @needsAudit
@@ -184,6 +189,57 @@ export function digest(algorithm, data) {
             else {
                 const output = new Uint8Array(digestLengths[algorithm]);
                 ExpoCrypto.digest(algorithm, output, data);
+                resolve(output.buffer);
+            }
+        }
+        catch (error) {
+            reject(error);
+        }
+    });
+}
+// @needsAudit
+/**
+ * Generates an HMAC of the supplied `data` string using the provided `key` and HMAC `algorithm`.
+ * You can specify the returned string format as one of `CryptoEncoding`. By default, the resolved value will be formatted as a `HEX` string.
+ * @param algorithm The HMAC algorithm (e.g. `CryptoHmacAlgorithm.SHA256`).
+ * @param key Secret key as a UTF-8 string.
+ * @param data Message to authenticate as a UTF-8 string.
+ * @param options Output encoding (hex or base64). Defaults to hex.
+ */
+export async function hmacStringAsync(algorithm, key, data, options = { encoding: CryptoEncoding.HEX }) {
+    if (!ExpoCrypto.hmacStringAsync) {
+        throw new UnavailabilityError('expo-crypto', 'hmacStringAsync');
+    }
+    assertHmacAlgorithm(algorithm);
+    assertData(key);
+    assertData(data);
+    assertEncoding(options.encoding);
+    return await ExpoCrypto.hmacStringAsync(algorithm, key, data, options);
+}
+/**
+ * Generates an HMAC of the supplied bytes `data` using the provided key bytes and HMAC `algorithm`.
+ * Returns an ArrayBuffer.
+ * @param algorithm The HMAC algorithm (e.g. `CryptoHmacAlgorithm.SHA256`).
+ * @param key Secret key bytes.
+ * @param data Message bytes.
+ * @return Promise resolving with an ArrayBuffer of the HMAC.
+ */
+export function hmac(algorithm, key, data) {
+    return new Promise((resolve, reject) => {
+        try {
+            assertHmacAlgorithm(algorithm);
+            if (typeof ExpoCrypto.hmacAsync === 'function') {
+                resolve(ExpoCrypto.hmacAsync(algorithm, key, data));
+            }
+            else {
+                const output = new Uint8Array(algorithm === CryptoHmacAlgorithm.SHA1
+                    ? 20
+                    : algorithm === CryptoHmacAlgorithm.SHA256
+                        ? 32
+                        : algorithm === CryptoHmacAlgorithm.SHA384
+                            ? 48
+                            : 64);
+                ExpoCrypto.hmac(algorithm, output, key, data);
                 resolve(output.buffer);
             }
         }

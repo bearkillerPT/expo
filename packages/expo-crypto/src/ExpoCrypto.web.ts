@@ -1,6 +1,16 @@
+import { Buffer } from 'buffer';
 import { CodedError, TypedArray } from 'expo-modules-core';
 
-import { CryptoDigestAlgorithm, CryptoEncoding, CryptoDigestOptions, CryptoHmacAlgorithm } from './Crypto.types';
+import {
+  CryptoDigestAlgorithm,
+  CryptoEncoding,
+  CryptoDigestOptions,
+  CryptoHmacAlgorithm,
+  CryptoHmacOptions,
+} from './Crypto.types';
+
+const { TextEncoder: NodeTextEncoder } =
+  typeof window === 'undefined' ? require('util') : { TextEncoder: undefined };
 
 const getCrypto = (): Crypto => window.crypto ?? (window as any).msCrypto;
 
@@ -64,6 +74,63 @@ export default {
     );
     const mac = await crypto.subtle.sign('HMAC', cryptoKey, toArrayBuffer(data));
     return mac;
+  },
+  hmac(
+    algorithm: CryptoHmacAlgorithm,
+    output: TypedArray,
+    key: BufferSource,
+    data: BufferSource
+  ): void {
+    // Synchronous-style API that writes into provided output TypedArray to mirror native implementation.
+    // Implemented using subtle.sign which is async under the hood; since WebCrypto has no sync HMAC, we throw to encourage using hmacAsync.
+    // However, the JS wrapper detects presence of hmac to decide sync vs async path; providing a shim avoids TypeError.
+    throw new CodedError(
+      'ERR_CRYPTO_UNAVAILABLE',
+      'Synchronous hmac() is not supported on web. Use hmacAsync via Crypto.hmac instead.'
+    );
+  },
+  async hmacStringAsync(
+    algorithm: CryptoHmacAlgorithm,
+    key: string,
+    data: string,
+    options: CryptoHmacOptions
+  ): Promise<string> {
+    const encoder = typeof TextEncoder !== 'undefined' ? new TextEncoder() : new NodeTextEncoder();
+    const keyBuf = encoder.encode(key);
+    const dataBuf = encoder.encode(data);
+    const hashName = algorithm.split('HMAC-')[1];
+    if (!hashName) {
+      throw new CodedError('ERR_CRYPTO_HMAC', 'Invalid HMAC algorithm format.');
+    }
+    let mac: ArrayBuffer | Uint8Array;
+    if (!crypto.subtle) {
+      const nodeCrypto = require('crypto');
+      const nodeHash = hashName.replace('-', '').toLowerCase();
+      const digest = nodeCrypto
+        .createHmac(nodeHash, Buffer.from(keyBuf))
+        .update(Buffer.from(dataBuf))
+        .digest();
+      mac = digest;
+    } else {
+      const cryptoKey = await crypto.subtle.importKey(
+        'raw',
+        keyBuf,
+        { name: 'HMAC', hash: { name: hashName } },
+        false,
+        ['sign']
+      );
+      mac = await crypto.subtle.sign('HMAC', cryptoKey, dataBuf);
+    }
+    if (options.encoding === CryptoEncoding.HEX) {
+      const bytes = mac instanceof Uint8Array ? mac : new Uint8Array(mac as ArrayBuffer);
+      return Array.prototype.map
+        .call(bytes, (b: number) => b.toString(16).padStart(2, '0'))
+        .join('');
+    } else if (options.encoding === CryptoEncoding.BASE64) {
+      const buf = mac instanceof Uint8Array ? mac : new Uint8Array(mac as ArrayBuffer);
+      return btoa(String.fromCharCode(...buf));
+    }
+    throw new CodedError('ERR_CRYPTO_HMAC', 'Invalid encoding type provided.');
   },
 };
 
